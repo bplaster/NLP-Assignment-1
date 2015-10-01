@@ -336,10 +336,9 @@ public class POSTaggerTester {
 				  pi[i][j] = max;
 				  bp[i][j] = b;
 			  }
-
 		  }
 		  
-		  // Find Max
+		  // Find Max Back Pointer
 		  int currentBP = 0;
 		  double m = Double.NEGATIVE_INFINITY;
 		  for(int j = 0; j<N; j++){
@@ -354,24 +353,23 @@ public class POSTaggerTester {
 		  List<S> backwardPath = new ArrayList<S>();
 		  S statePtr = trellis.getEndState();
 		  backwardPath.add(statePtr);
-		  for(int i = 1; i<T; i++){
+		  for(int i = 1; i<=T; i++){
 			  S st = (S)State.buildState(states.get(bp[T-i][currentBP]), states.get(currentBP), T-i);
 			  currentBP = bp[T-i][currentBP];
 			  backwardPath.add(st);
 		  }
-		  backwardPath.add(trellis.getStartState());
 
 		  // Reverse list
 		  List<S> path = new ArrayList<S>();
-		  for(int i = 0; i<backwardPath.size(); i++){
-			  path.add(backwardPath.get(backwardPath.size() - 1 - i));
+		  for(int i = 1; i<=backwardPath.size(); i++){
+			  path.add(backwardPath.get(backwardPath.size() - i));
 		  }
-		  
+
 //		  System.out.println(path);
 
-	        return path;
-	    }
+		  return path;
 	  }
+  }
 
   static class POSTagger {
 
@@ -573,12 +571,18 @@ public class POSTaggerTester {
 	    
 	  double weights[] = {0.0,0.0,0.0};
 	  CounterMap<String, String> wordsToTags = new CounterMap<String, String>();
-	  CounterMap<String, String> suffixesToTags = new CounterMap<String, String>();
-	  int suffixMaxLength = 6;
+	  CounterMap<String, String> lowSuffixesToTags = new CounterMap<String, String>();
+	  CounterMap<String, String> capSuffixesToTags = new CounterMap<String, String>();
+
 	  Counter<String> unknownWordTags = new Counter<String>();
+	  Counter<String> wordCount = new Counter<String>();
 	  Counter<String> trigramsCount = new Counter<String>();
 	  Counter<String> bigramsCount = new Counter<String>();
 	  Counter<String> unigramsCount = new Counter<String>();
+	  
+	  // Tunable parameters
+	  int suffixMaxLength = 10;
+	  double smoothCount = 0.1;
 
 	  public Counter<String> getTags() {
 		  return unknownWordTags;
@@ -592,33 +596,38 @@ public class POSTaggerTester {
 		  int position = localTrigramContext.getPosition();
 		  String word = localTrigramContext.getWords().get(position);
 		  Counter<String> tagCounter = unknownWordTags;
+		  double p_of_w = 0.0;
 		  
 		  // Check if known word
 		  if (wordsToTags.keySet().contains(word)) {
 			  tagCounter = wordsToTags.getCounter(word);
+			  p_of_w = wordCount.getCount(word);
 		  } else {
 			  tagCounter = getTagsForUnknownWord(word);
+			  p_of_w = 1.0/wordCount.size();
 		  }
 
 		  String bigram = makeBigramString(localTrigramContext.getPreviousPreviousTag(),localTrigramContext.getPreviousTag());
 		  double bCount = bigramsCount.getCount(bigram);
+		  double uCount = unigramsCount.getCount(localTrigramContext.getPreviousTag());
+		  double uTotCount = unigramsCount.totalCount();
 		  Set<String> allowedFollowingTags = allowedFollowingTags(tagCounter.keySet(), localTrigramContext.getPreviousPreviousTag(), localTrigramContext.getPreviousTag());
 		  Counter<String> logScoreCounter = new Counter<String>();
 		  
-		  if (bCount > 0) {
-			  for (String tag : tagCounter.keySet()) {
-				  String trigram = makeTrigramString(localTrigramContext.getPreviousPreviousTag(),localTrigramContext.getPreviousTag(), tag);
-//				  double p_t1_given_t2t3 = trigramsCount.getCount(trigram)/bCount;
-				  double p_t1_given_t2t3 = 	(weights[0]*unigramsCount.getCount(tag)) + (weights[2]*trigramsCount.getCount(trigram)/bCount);
-				  if (unigramsCount.getCount(localTrigramContext.getPreviousTag()) > 0) {
-					  p_t1_given_t2t3 += (weights[1]*bigramsCount.getCount(makeBigramString(localTrigramContext.getPreviousTag(), tag))/unigramsCount.getCount(localTrigramContext.getPreviousTag()));
-				  } 
-				  double p_w_given_t = tagCounter.getCount(tag)/unigramsCount.getCount(tag);
-				  double logScore = Math.log(p_t1_given_t2t3 * p_w_given_t);
-				  if (!restrictTrigrams || allowedFollowingTags.isEmpty() || allowedFollowingTags.contains(tag))
-					  logScoreCounter.setCount(tag, logScore);
-			  }
+		  for (String tag : tagCounter.keySet()) {
+			  String trigram = makeTrigramString(localTrigramContext.getPreviousPreviousTag(),localTrigramContext.getPreviousTag(), tag);
+			  double p_of_t = unigramsCount.getCount(tag)/uTotCount;
+			  // Interpolate
+			  double p_w_given_t = tagCounter.getCount(tag)*p_of_w/p_of_t;
+			  double p_t1_given_t2t3 = (weights[0]*p_of_t);
+			  if (uCount > 0) { p_t1_given_t2t3 += (weights[1]*bigramsCount.getCount(makeBigramString(localTrigramContext.getPreviousTag(), tag))/uCount); }
+			  if (bCount > 0) { p_t1_given_t2t3 += (weights[2]*trigramsCount.getCount(trigram)/bCount); }
+			  double logScore = Math.log(p_t1_given_t2t3) + Math.log(p_w_given_t);
+			  
+			  if (!restrictTrigrams || allowedFollowingTags.isEmpty() || allowedFollowingTags.contains(tag))
+				  logScoreCounter.setCount(tag, logScore);
 		  }
+		  
 		  return logScoreCounter;
 	  }
 	  
@@ -626,6 +635,11 @@ public class POSTaggerTester {
 		  int max = Math.min(suffixMaxLength, word.length());
 		  int lastIndex = word.length() - 1;
 		  Counter<String> averageSuffixTags = new Counter<String>();
+		  
+		  CounterMap<String, String> suffixesToTags = this.lowSuffixesToTags;
+		  if(Character.isUpperCase(word.charAt(0))){
+			  suffixesToTags = this.capSuffixesToTags;
+		  }
 		  
 		  // Average the tags over all the possible suffixes
 		  for(int i = 0; i < max; i++){
@@ -664,6 +678,12 @@ public class POSTaggerTester {
 	  private void incrementSuffixes(String word, String tag, double count){
 		  int max = Math.min(suffixMaxLength, word.length());
 		  int lastIndex = word.length() - 1;
+		  
+		  CounterMap<String, String> suffixesToTags = this.lowSuffixesToTags;
+		  if(Character.isUpperCase(word.charAt(0))){
+			  suffixesToTags = this.capSuffixesToTags;
+		  }
+		  
 		  for(int i = 0; i < max; i++){
 			  suffixesToTags.incrementCount(word.substring(lastIndex - i, lastIndex), tag, count);
 		  }
@@ -679,11 +699,26 @@ public class POSTaggerTester {
 				  unknownWordTags.incrementCount(tag, 1.0);
 			  }
 			  wordsToTags.incrementCount(word, tag, 1.0);
+			  wordCount.incrementCount(word, 1.0);
 			  incrementSuffixes(word, tag, 1.0);
 			  unigramsCount.incrementCount(tag, 1.0);
-			  bigramsCount.incrementCount(makeBigramString(labeledLocalTrigramContext.getPreviousPreviousTag(), labeledLocalTrigramContext.getPreviousTag()), 1.0);
 			  bigramsCount.incrementCount(makeBigramString(labeledLocalTrigramContext.getPreviousTag(), labeledLocalTrigramContext.getCurrentTag()), 1.0);
 			  trigramsCount.incrementCount(makeTrigramString(labeledLocalTrigramContext.getPreviousPreviousTag(), labeledLocalTrigramContext.getPreviousTag(), labeledLocalTrigramContext.getCurrentTag()), 1.0);
+		  }
+		  
+		  // Smoothing
+		  for (String tag1: unigramsCount.keySet()){
+			  unigramsCount.incrementCount(tag1, smoothCount);
+			  for (String tag2: unigramsCount.keySet()){
+				  // Smoothing for bigrams
+				  String bigram = makeBigramString(tag1, tag2);
+				  bigramsCount.incrementCount(bigram, smoothCount);
+				  for (String tag3: unigramsCount.keySet()){
+					  // Smoothing for trigrams
+					  String trigram = makeTrigramString(tag1, tag2, tag3);
+					  trigramsCount.incrementCount(trigram, smoothCount);
+				  }
+			  }
 		  }
 		  		  
 		  // Determine weights for Interpolation
@@ -693,10 +728,9 @@ public class POSTaggerTester {
 			  String tags[] = trigram.split(" ");
 			  String b01 = makeBigramString(tags[0], tags[1]);
 			  String b12 = makeBigramString(tags[1], tags[2]);
-			  double a = (f012-1)/(bigramsCount.getCount(b01)-1);
-			  double b = (bigramsCount.getCount(b12)-1)/(unigramsCount.getCount(tags[1])-1);
-			  double c = (unigramsCount.getCount(tags[2])-1)/(wordsToTags.totalCount()-1);
-//			  System.out.println("counts " + a + " " + b + " " + c);
+			  double a = (f012-1.0)/(bigramsCount.getCount(b01)-1.0);
+			  double b = (bigramsCount.getCount(b12)-1.0)/(unigramsCount.getCount(tags[1])-1.0);
+			  double c = (unigramsCount.getCount(tags[2])-1.0)/(wordsToTags.totalCount()-1.0);
 
 			  if(a > b && a > c){
 				  weights [2] += f012; 
@@ -708,43 +742,14 @@ public class POSTaggerTester {
 		  }
 		  double len = weights[0] + weights[1] + weights[2];
 		  for(int i=0; i<weights.length; i++){ weights[i] /= len; }
-		  System.out.println("weights " + weights[0] + " " + weights[1] + " " + weights[2]);
-		  
-		  // Smoothing
-		  double smoothCount = 1.0;
-		  for (String tag1: unigramsCount.keySet()){
-			  for (String tag2: unigramsCount.keySet()){
-				  // Smoothing for bigrams
-				  String bigram1 = makeBigramString(tag1, tag2);
-				  String bigram2 = makeBigramString(tag2, tag1);
-				  bigramsCount.incrementCount(bigram1, smoothCount);
-				  bigramsCount.incrementCount(bigram2, smoothCount);
-				  for (String tag3: unigramsCount.keySet()){
-					  // Smoothing for trigrams
-					  String trigram1 = makeTrigramString(tag1, tag2, tag3);
-					  String trigram2 = makeTrigramString(tag1, tag3, tag2);
-					  String trigram3 = makeTrigramString(tag2, tag1, tag3);
-					  String trigram4 = makeTrigramString(tag2, tag3, tag1);
-					  String trigram5 = makeTrigramString(tag3, tag1, tag2);
-					  String trigram6 = makeTrigramString(tag3, tag2, tag1);
-					  trigramsCount.incrementCount(trigram1, smoothCount);
-					  trigramsCount.incrementCount(trigram2, smoothCount);
-					  trigramsCount.incrementCount(trigram3, smoothCount);
-					  trigramsCount.incrementCount(trigram4, smoothCount);
-					  trigramsCount.incrementCount(trigram5, smoothCount);
-					  trigramsCount.incrementCount(trigram6, smoothCount);
-				  }
-			  }
-		  }
+		  System.out.println("Interpolation weights: " + weights[0] + " " + weights[1] + " " + weights[2]);
 		  
 		  // Normalize
+		  wordCount = Counters.normalize(wordCount);
 		  wordsToTags = Counters.conditionalNormalize(wordsToTags);
-		  suffixesToTags = Counters.conditionalNormalize(suffixesToTags);
+		  lowSuffixesToTags = Counters.conditionalNormalize(lowSuffixesToTags);
+		  capSuffixesToTags = Counters.conditionalNormalize(capSuffixesToTags);
 		  unknownWordTags = Counters.normalize(unknownWordTags);
-		  unigramsCount = Counters.normalize(unigramsCount);
-		  bigramsCount = Counters.normalize(bigramsCount);
-		  trigramsCount = Counters.normalize(trigramsCount);
-		  
 	  }
 
 	  public void validate(List<LabeledLocalTrigramContext> localTrigramContexts) {
@@ -877,6 +882,7 @@ public class POSTaggerTester {
       double scoreOfGuessedTagging = posTagger.scoreTagging(new TaggedSentence(words, guessedTags));
       if (scoreOfGoldTagging > scoreOfGuessedTagging) {
         numDecodingInversions++;
+//        System.out.println(alignedTaggings(words, goldTags, guessedTags, true) + "\n");
         if (verbose) System.out.println("WARNING: Decoder suboptimality detected.  Gold tagging has higher score than guessed tagging.");
       }
       if (verbose) System.out.println(alignedTaggings(words, goldTags, guessedTags, true) + "\n");
@@ -973,12 +979,20 @@ public class POSTaggerTester {
     System.out.println("done.");
 
     // Construct tagger components
-    // TODO : improve on the MostFrequentTagScorer
-//    LocalTrigramScorer localTrigramScorer = new MostFrequentTagScorer(false);
-    LocalTrigramScorer localTrigramScorer = new HMMTagScorer(false);
-    // TODO : improve on the GreedyDecoder
-//    TrellisDecoder<State> trellisDecoder = new GreedyDecoder<State>();
-    TrellisDecoder<State> trellisDecoder = new ViterbiDecoder<State>();
+    LocalTrigramScorer localTrigramScorer;
+    TrellisDecoder<State> trellisDecoder;
+    
+    if (argMap.containsKey("-hmm")){
+    	localTrigramScorer = new HMMTagScorer(false);
+    } else {
+    	localTrigramScorer = new MostFrequentTagScorer(false);
+    }
+    
+    if (argMap.containsKey("-viterbi")){
+    	trellisDecoder = new ViterbiDecoder<State>();
+    } else {
+    	trellisDecoder = new GreedyDecoder<State>();
+    }
 
     // Train tagger
     POSTagger posTagger = new POSTagger(localTrigramScorer, trellisDecoder);
