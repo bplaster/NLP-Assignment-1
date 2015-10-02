@@ -297,6 +297,7 @@ public class POSTaggerTester {
 		  if(!states.contains(START_TAG)){
 			  states.add(start, START_TAG);
 		  }
+		  int stop = states.indexOf(STOP_TAG);
 		  
 		  int N = states.size();
 		  int T = trellis.getSentenceLength() + 2;
@@ -312,28 +313,29 @@ public class POSTaggerTester {
 		  }
 		  pi[0][start] = 0.0;
 
+		  
 		  for(int i = 1; i<T; i++){
 			  for(int j = 0; j<N; j++){
 				  int b = bp[i][j];
-				  double max = Double.NEGATIVE_INFINITY;
-
+				  double maxScore = Double.NEGATIVE_INFINITY;
+				  
 				  for(int k = 0; k<N; k++){
 					  double p = pi[i-1][k];
 					  S currentState = (S)State.buildState(states.get(k), states.get(j), i);
 					  S previousState = (S)State.buildState(states.get(bp[i-1][k]), states.get(k), i-1);
 
-					  double transition = Double.NEGATIVE_INFINITY;
+					  double transition = Double.NEGATIVE_INFINITY;					  
 					  if(trellis.getForwardTransitions(previousState).containsKey(currentState)){
 						  transition = trellis.getForwardTransitions(previousState).getCount(currentState);
 					  }
 					  
-					  double score = transition + p;
-					  if(score > max){
-						  max = score;
+					  double score = p + transition;
+					  if(score > maxScore){
+						  maxScore = score;
 						  b = k;
 					  }
 				  }
-				  pi[i][j] = max;
+				  pi[i][j] = maxScore;
 				  bp[i][j] = b;
 			  }
 		  }
@@ -350,20 +352,37 @@ public class POSTaggerTester {
 		  }
 		  
 		  // Determine Max Path
-		  List<S> backwardPath = new ArrayList<S>();
+		  List<S> path = new ArrayList<S>();
 		  S statePtr = trellis.getEndState();
-		  backwardPath.add(statePtr);
+		  path.add(0, statePtr);
 		  for(int i = 1; i<=T; i++){
+//			  if(T == 4){
+//				  System.out.printf("%10.2f %d\t", pi[T-i][currentBP], currentBP);
+//			  }
+
 			  S st = (S)State.buildState(states.get(bp[T-i][currentBP]), states.get(currentBP), T-i);
 			  currentBP = bp[T-i][currentBP];
-			  backwardPath.add(st);
+			  path.add(0, st);
 		  }
-
-		  // Reverse list
-		  List<S> path = new ArrayList<S>();
-		  for(int i = 1; i<=backwardPath.size(); i++){
-			  path.add(backwardPath.get(backwardPath.size() - i));
-		  }
+		  
+		// Debugging
+		  
+//		  if(T == 4){
+//			  System.out.println();
+//			  for(int i = 0; i<=T; i++){
+//				  System.out.print(path.get(i) + " ");
+//			  }
+//			  System.out.println();
+//
+//			  for(int j = 0; j<N; j++){
+//				  for(int k = 0; k<T; k++){
+//					  System.out.printf("%10.2f %d\t", pi[k][j], bp[k][j]);
+//				  }
+//				  System.out.println();
+//			  }
+//			  
+//			  System.out.println();
+//		  }
 
 //		  System.out.println(path);
 
@@ -615,13 +634,15 @@ public class POSTaggerTester {
 		  Counter<String> logScoreCounter = new Counter<String>();
 		  
 		  for (String tag : tagCounter.keySet()) {
-			  String trigram = makeTrigramString(localTrigramContext.getPreviousPreviousTag(),localTrigramContext.getPreviousTag(), tag);
-			  double p_of_t = unigramsCount.getCount(tag)/uTotCount;
 			  // Interpolate
-			  double p_w_given_t = tagCounter.getCount(tag)*p_of_w/p_of_t;
+			  double p_of_t = unigramsCount.getCount(tag)/uTotCount;
+			  double p_w_given_t = Math.min(tagCounter.getCount(tag)*p_of_w/p_of_t, 1.0);
 			  double p_t1_given_t2t3 = (weights[0]*p_of_t);
-			  if (uCount > 0) { p_t1_given_t2t3 += (weights[1]*bigramsCount.getCount(makeBigramString(localTrigramContext.getPreviousTag(), tag))/uCount); }
-			  if (bCount > 0) { p_t1_given_t2t3 += (weights[2]*trigramsCount.getCount(trigram)/bCount); }
+			  if (uCount > 0) p_t1_given_t2t3 += (weights[1]*bigramsCount.getCount(makeBigramString(localTrigramContext.getPreviousTag(), tag))/uCount);
+			  
+			  // TODO: Tracked suboptimalities down to this line:
+//			  if (bCount > 0) p_t1_given_t2t3 += (weights[2]*trigramsCount.getCount(makeTrigramString(localTrigramContext.getPreviousPreviousTag(),localTrigramContext.getPreviousTag(), tag))/bCount);
+			  
 			  double logScore = Math.log(p_t1_given_t2t3) + Math.log(p_w_given_t);
 			  
 			  if (!restrictTrigrams || allowedFollowingTags.isEmpty() || allowedFollowingTags.contains(tag))
@@ -691,7 +712,7 @@ public class POSTaggerTester {
 
 	  public void train(List<LabeledLocalTrigramContext> labeledLocalTrigramContexts) {
 		  // collect word-tag counts
-		  for (LabeledLocalTrigramContext labeledLocalTrigramContext : labeledLocalTrigramContexts) {
+		  for (LabeledLocalTrigramContext labeledLocalTrigramContext : labeledLocalTrigramContexts) {			  
 			  String word = labeledLocalTrigramContext.getCurrentWord();
 			  String tag = labeledLocalTrigramContext.getCurrentTag();
 			  if (!wordsToTags.keySet().contains(word)) {
@@ -702,9 +723,17 @@ public class POSTaggerTester {
 			  wordCount.incrementCount(word, 1.0);
 			  incrementSuffixes(word, tag, 1.0);
 			  unigramsCount.incrementCount(tag, 1.0);
-			  bigramsCount.incrementCount(makeBigramString(labeledLocalTrigramContext.getPreviousTag(), labeledLocalTrigramContext.getCurrentTag()), 1.0);
-			  trigramsCount.incrementCount(makeTrigramString(labeledLocalTrigramContext.getPreviousPreviousTag(), labeledLocalTrigramContext.getPreviousTag(), labeledLocalTrigramContext.getCurrentTag()), 1.0);
+			  
+			  if(labeledLocalTrigramContext.getPosition() == 0){
+				  unigramsCount.incrementCount(labeledLocalTrigramContext.getPreviousPreviousTag(), 1.0);
+				  unigramsCount.incrementCount(labeledLocalTrigramContext.getPreviousTag(), 1.0);
+				  bigramsCount.incrementCount(makeBigramString(labeledLocalTrigramContext.getPreviousPreviousTag(), labeledLocalTrigramContext.getPreviousTag()), 1.0);
+			  }
+
+			  bigramsCount.incrementCount(makeBigramString(labeledLocalTrigramContext.getPreviousTag(), tag), 1.0);
+			  trigramsCount.incrementCount(makeTrigramString(labeledLocalTrigramContext.getPreviousPreviousTag(), labeledLocalTrigramContext.getPreviousTag(), tag), 1.0);
 		  }
+		  
 		  
 		  // Smoothing
 		  for (String tag1: unigramsCount.keySet()){
@@ -885,7 +914,7 @@ public class POSTaggerTester {
 //        System.out.println(alignedTaggings(words, goldTags, guessedTags, true) + "\n");
         if (verbose) System.out.println("WARNING: Decoder suboptimality detected.  Gold tagging has higher score than guessed tagging.");
       }
-      if (verbose) System.out.println(alignedTaggings(words, goldTags, guessedTags, true) + "\n");
+      if (verbose) System.out.println(alignedTaggings(words, goldTags, guessedTags, true));
     }
     System.out.println("Tag Accuracy: " + (numTagsCorrect / numTags) + " (Unknown Accuracy: " + (numUnknownWordsCorrect / numUnknownWords) + ")  Decoder Suboptimalities Detected: " + numDecodingInversions);
   }
