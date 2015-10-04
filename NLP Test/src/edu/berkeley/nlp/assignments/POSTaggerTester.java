@@ -203,22 +203,6 @@ public class POSTaggerTester {
       this.startState = startState;
     }
     
-    public int getSentenceLength(){
-    	return this.sentenceLength;
-    }
-    
-    public Counter<String> getPossibleStates(){
-    	return this.possibleStates;
-    }
-
-    public void setSentenceLength(int length){
-    	this.sentenceLength = length;
-    }
-    
-    public void setPossibleStates(Counter<String> states){
-    	this.possibleStates = states;
-    }
-    
     /**
      * Get the unique end state for this trellis.
      */
@@ -290,15 +274,12 @@ public class POSTaggerTester {
   static class ViterbiDecoder <S> implements TrellisDecoder<S> {
 	  
 	  public List<S> getBestPath(Trellis<S> trellis) {
-		  
-//		  int T = trellis.getSentenceLength() + 2;
-		  
+		  		  
 		  // Create Array of all possible states
 		  ArrayList<ArrayList<S>> allStates = new ArrayList<ArrayList<S>>();
 		  ArrayList<S> nextStates = new ArrayList<S>();
 		  nextStates.add(trellis.getStartState());
 		  allStates.add(0, nextStates);
-//		  for(int i = 1; i<=T; i++){
 		  while(!nextStates.contains(trellis.getEndState())){
 			  ArrayList<S> newStates = new ArrayList<S>();
 			  for(S nextState: nextStates){
@@ -370,100 +351,6 @@ public class POSTaggerTester {
 			  path.add(0, allStates.get(T-i).get(currentBP));
 			  currentBP = bp.get(T-i)[currentBP];
 		  }
-		  
-//		  ArrayList<String> states = new ArrayList<String>();
-//		  states.addAll(trellis.getPossibleStates().keySet());
-//		  int start = 0;
-//		  if(!states.contains(START_TAG)){
-//			  states.add(start, START_TAG);
-//		  }
-//		  int stop = states.indexOf(STOP_TAG);
-//		  
-//		  int N = states.size();
-//		  int T = trellis.getSentenceLength() + 2;
-//		  double pi[][] = new double[T][N];
-//		  int[][] bp = new int[T][N];
-//		  
-//		  // Initialize Values
-//		  for(int i = 0; i<T; i++){
-//			  for(int j = 0; j<N; j++){
-//				  bp[i][j] = start;
-//				  pi[i][j] = Double.NEGATIVE_INFINITY;
-//			  }
-//		  }
-//		  pi[0][start] = 0.0;
-//		  
-//		  for(int i = 1; i<T; i++){
-//			  for(int j = 0; j<N; j++){
-//				  int b = bp[i][j];
-//				  double maxScore = Double.NEGATIVE_INFINITY;
-//				  
-//				  for(int k = 0; k<N; k++){
-//					  double p = pi[i-1][k];
-//					  S currentState = (S)State.buildState(states.get(k), states.get(j), i);
-//					  S previousState = (S)State.buildState(states.get(bp[i-1][k]), states.get(k), i-1);
-//
-//					  double transition = Double.NEGATIVE_INFINITY;					  
-//					  if(trellis.getForwardTransitions(previousState).containsKey(currentState)){
-//						  transition = trellis.getForwardTransitions(previousState).getCount(currentState);
-//					  }
-//					  
-//					  double score = p + transition;
-//					  if(score > maxScore){
-//						  maxScore = score;
-//						  b = k;
-//					  }
-//				  }
-//				  pi[i][j] = maxScore;
-//				  bp[i][j] = b;
-//			  }
-//		  }
-//		  
-//		  // Find Max Back Pointer
-//		  int currentBP = 0;
-//		  double m = Double.NEGATIVE_INFINITY;
-//		  for(int j = 0; j<N; j++){
-//			  double p = pi[T-1][j];
-//			  if(p > m){
-//				  m = p;
-//				  currentBP = j;
-//			  }
-//		  }
-//		  
-//		  // Determine Max Path
-//		  List<S> path = new ArrayList<S>();
-//		  S statePtr = trellis.getEndState();
-//		  path.add(0, statePtr);
-//		  for(int i = 1; i<=T; i++){
-////			  if(T == 4){
-////				  System.out.printf("%10.2f %d\t", pi[T-i][currentBP], currentBP);
-////			  }
-//
-//			  S st = (S)State.buildState(states.get(bp[T-i][currentBP]), states.get(currentBP), T-i);
-//			  currentBP = bp[T-i][currentBP];
-//			  path.add(0, st);
-//		  }
-		  
-		// Debugging
-		  
-//		  if(T == 4){
-//			  System.out.println();
-//			  for(int i = 0; i<=T; i++){
-//				  System.out.print(path.get(i) + " ");
-//			  }
-//			  System.out.println();
-//
-//			  for(int j = 0; j<N; j++){
-//				  for(int k = 0; k<T; k++){
-//					  System.out.printf("%10.2f %d\t", pi[k][j], bp[k][j]);
-//				  }
-//				  System.out.println();
-//			  }
-//			  
-//			  System.out.println();
-//		  }
-
-//		  System.out.println(path);
 
 		  return path;
 	  }
@@ -511,8 +398,6 @@ public class POSTaggerTester {
     private Trellis<State> buildTrellis(List<String> sentence) {
       Trellis<State> trellis = new Trellis<State>();
       trellis.setStartState(State.getStartState());
-      trellis.setSentenceLength(sentence.size());
-      trellis.setPossibleStates(localTrigramScorer.getTags());
       State stopState = State.getStopState(sentence.size() + 2);
       trellis.setStopState(stopState);
       Set<State> states = Collections.singleton(State.getStartState());
@@ -649,9 +534,7 @@ public class POSTaggerTester {
 	 * single conditional probability). For efficiency, the Counter can 
 	 * contain only the tags which occur in the given context 
 	 * with non-zero model probability.
-     */
-	Counter<String> getTags();
-	  
+     */	  
     Counter<String> getLogScoreCounter(LocalTrigramContext localTrigramContext);
 
     void train(List<LabeledLocalTrigramContext> localTrigramContexts);
@@ -681,10 +564,6 @@ public class POSTaggerTester {
 	  // Tunable parameters
 	  int suffixMaxLength = 10;
 	  double smoothCount = 0.1;
-
-	  public Counter<String> getTags() {
-		  return unknownWordTags;
-	  }
 	  
 	  public int getHistorySize() {
 		  return 2;
@@ -887,10 +766,6 @@ public class POSTaggerTester {
       return 2;
     }
 
-    public Counter<String> getTags() {
-    	return unknownWordTags;
-    }
-	  
     public Counter<String> getLogScoreCounter(LocalTrigramContext localTrigramContext) {
       int position = localTrigramContext.getPosition();
       String word = localTrigramContext.getWords().get(position);
