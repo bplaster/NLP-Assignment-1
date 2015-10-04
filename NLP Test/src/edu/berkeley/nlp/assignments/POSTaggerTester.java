@@ -550,7 +550,11 @@ public class POSTaggerTester {
 	    
 	  boolean restrictTrigrams; // if true, assign log score of Double.NEGATIVE_INFINITY to illegal tag trigrams.
 	    
-	  double weights[] = {0.0,0.0,0.0};
+	  int suffixMaxLength = 10;
+
+	  double lowSufWeights[] = new double[suffixMaxLength];
+	  double capSufWeights[] = new double[suffixMaxLength];
+	  double interpWeights[] = {0.0,0.0,0.0};
 	  CounterMap<String, String> wordsToTags = new CounterMap<String, String>();
 	  CounterMap<String, String> lowSuffixesToTags = new CounterMap<String, String>();
 	  CounterMap<String, String> capSuffixesToTags = new CounterMap<String, String>();
@@ -560,10 +564,7 @@ public class POSTaggerTester {
 	  Counter<String> trigramsCount = new Counter<String>();
 	  Counter<String> bigramsCount = new Counter<String>();
 	  Counter<String> unigramsCount = new Counter<String>();
-	  
-	  // Tunable parameters
-	  int suffixMaxLength = 10;
-	  
+	  	  
 	  public int getHistorySize() {
 		  return 2;
 	  }
@@ -594,9 +595,9 @@ public class POSTaggerTester {
 			  // Interpolate
 			  double p_of_t = unigramsCount.getCount(tag)/uTotCount;
 			  double p_w_given_t = Math.min(tagCounter.getCount(tag)*p_of_w/p_of_t, 1.0);
-			  double p_t1_given_t2t3 = (weights[0]*p_of_t);
-			  if (uCount > 0) p_t1_given_t2t3 += (weights[1]*bigramsCount.getCount(makeBigramString(localTrigramContext.getPreviousTag(), tag))/uCount);
-			  if (bCount > 0) p_t1_given_t2t3 += (weights[2]*trigramsCount.getCount(makeTrigramString(localTrigramContext.getPreviousPreviousTag(),localTrigramContext.getPreviousTag(), tag))/bCount);
+			  double p_t1_given_t2t3 = (interpWeights[0]*p_of_t);
+			  if (uCount > 0) p_t1_given_t2t3 += (interpWeights[1]*bigramsCount.getCount(makeBigramString(localTrigramContext.getPreviousTag(), tag))/uCount);
+			  if (bCount > 0) p_t1_given_t2t3 += (interpWeights[2]*trigramsCount.getCount(makeTrigramString(localTrigramContext.getPreviousPreviousTag(),localTrigramContext.getPreviousTag(), tag))/bCount);
 			  
 			  double logScore = Math.log(p_t1_given_t2t3) + Math.log(p_w_given_t);
 			  
@@ -613,8 +614,10 @@ public class POSTaggerTester {
 		  Counter<String> averageSuffixTags = new Counter<String>();
 		  
 		  CounterMap<String, String> suffixesToTags = this.lowSuffixesToTags;
+		  double sufWeights[] = this.lowSufWeights;
 		  if(Character.isUpperCase(word.charAt(0))){
 			  suffixesToTags = this.capSuffixesToTags;
+			  sufWeights = this.capSufWeights;
 		  }
 		  
 		  // Average the tags over all the possible suffixes
@@ -624,6 +627,18 @@ public class POSTaggerTester {
 				  averageSuffixTags.incrementCount(tag, suffixTags.getCount(tag)/max);
 			  }
 		  }
+//		  for(String tag:unknownWordTags.keySet()){
+//			  double p_t_given_i = unknownWordTags.getCount(tag);
+//			  for(int i = 0; i < max; i++){
+//				  String suffix = word.substring(lastIndex - i, lastIndex);
+//				  double maxLikelihood = 0.0;
+//				  if(suffixesToTags.getCount(suffix, tag) > 0){
+//					 maxLikelihood = suffixesToTags.getCount(suffix, tag) / suffixesToTags.getCounter(suffix).totalCount();
+//				  }
+//				  p_t_given_i = (maxLikelihood + p_t_given_i*sufWeights[i])/(1.0 + sufWeights[i]);
+//			  }
+//			  averageSuffixTags.incrementCount(tag, p_t_given_i);
+//		  }
 		  
 		  if (averageSuffixTags.isEmpty()){
 			  averageSuffixTags = unknownWordTags;
@@ -717,16 +732,46 @@ public class POSTaggerTester {
 			  double c = (unigramsCount.getCount(tags[2])-1.0)/(wordsToTags.totalCount()-1.0);
 
 			  if(a > b && a > c){
-				  weights [2] += f012; 
+				  interpWeights [2] += f012; 
 			  } else if (b > c) {
-				  weights [1] += f012; 
+				  interpWeights [1] += f012; 
 			  } else {
-				  weights [0] += f012; 
+				  interpWeights [0] += f012; 
 			  }
 		  }
-		  double len = weights[0] + weights[1] + weights[2];
-		  for(int i=0; i<weights.length; i++){ weights[i] /= len; }
-		  System.out.println("Interpolation weights: " + weights[0] + " " + weights[1] + " " + weights[2]);
+		  double len = interpWeights[0] + interpWeights[1] + interpWeights[2];
+		  for(int i=0; i<interpWeights.length; i++){ interpWeights[i] /= len; }
+		  System.out.printf("Interpolation weights: %.3f %.3f %.3f \n", interpWeights[0], interpWeights[1], interpWeights[2]);
+		  
+//		  // Determine weights for Suffixes
+//		  for(String suffix: lowSuffixesToTags.keySet()){
+//			  lowSufWeights[suffix.length()] += lowSuffixesToTags.getCounter(suffix).totalCount();
+//		  }
+//		  for(String suffix: capSuffixesToTags.keySet()){
+//			  capSufWeights[suffix.length()] += capSuffixesToTags.getCounter(suffix).totalCount();
+//		  }
+//		  double lowWeightsSum = 0.0;
+//		  double capWeightsSum = 0.0;
+//		  for(int i = 0; i<lowSufWeights.length; i++){
+//			  lowWeightsSum += lowSufWeights[i];
+//			  capWeightsSum += capSufWeights[i];
+//		  }
+//		  for(int i = 0; i<lowSufWeights.length; i++){
+//			  lowSufWeights[i] /= lowWeightsSum;
+//			  capSufWeights[i] /= capWeightsSum;
+//		  }
+//		  
+//		  // Display Suffix Weights
+//		  System.out.print("Lower Case Suffix weights: ");
+//		  for(int i=0; i<lowSufWeights.length; i++){
+//			  System.out.printf("%.3f ", lowSufWeights[i]);
+//		  }
+//		  System.out.println();
+//		  System.out.print("Upper Case Suffix weights: ");
+//		  for(int i=0; i<capSufWeights.length; i++){
+//			  System.out.printf("%.3f ", capSufWeights[i]);
+//		  }
+//		  System.out.println();
 		  
 		  // Normalize
 		  wordCount = Counters.normalize(wordCount);
@@ -734,6 +779,20 @@ public class POSTaggerTester {
 		  lowSuffixesToTags = Counters.conditionalNormalize(lowSuffixesToTags);
 		  capSuffixesToTags = Counters.conditionalNormalize(capSuffixesToTags);
 		  unknownWordTags = Counters.normalize(unknownWordTags);
+		  
+//		  // Determine weights for Suffixes
+//		  // http://www.coli.uni-saarland.de/~thorsten/publications/Brants-ANLP00.pdf
+//		  System.out.print("Suffix weights: ");
+//		  double averageP = 1.0 / unknownWordTags.size();
+//		  for(int i = 0; i < suffixWeights.length; i++){
+//			  double p_of_t = 0.0;
+//			  for(String tags: unknownWordTags.keySet()){
+//				  p_of_t += Math.pow(unknownWordTags.getCount(tags) - averageP,2);
+//			  }
+//			  suffixWeights[i] = (p_of_t/(suffixWeights.length - 1.0));
+//			  System.out.print(suffixWeights[i] + " ");
+//		  }
+//		  System.out.println();
 	  }
 
 	  public void validate(List<LabeledLocalTrigramContext> localTrigramContexts) {
