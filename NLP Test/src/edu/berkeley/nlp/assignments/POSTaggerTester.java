@@ -291,79 +291,158 @@ public class POSTaggerTester {
 	  
 	  public List<S> getBestPath(Trellis<S> trellis) {
 		  
-		  ArrayList<String> states = new ArrayList<String>();
-		  states.addAll(trellis.getPossibleStates().keySet());
-		  int start = 0;
-		  if(!states.contains(START_TAG)){
-			  states.add(start, START_TAG);
-		  }
-		  int stop = states.indexOf(STOP_TAG);
+//		  int T = trellis.getSentenceLength() + 2;
 		  
-		  int N = states.size();
-		  int T = trellis.getSentenceLength() + 2;
-		  double pi[][] = new double[T][N];
-		  int[][] bp = new int[T][N];
-
-		  // Initialize Values
-		  for(int i = 0; i<T; i++){
-			  for(int j = 0; j<N; j++){
-				  bp[i][j] = start;
-				  pi[i][j] = Double.NEGATIVE_INFINITY;
+		  // Create Array of all possible states
+		  ArrayList<ArrayList<S>> allStates = new ArrayList<ArrayList<S>>();
+		  ArrayList<S> nextStates = new ArrayList<S>();
+		  nextStates.add(trellis.getStartState());
+		  allStates.add(0, nextStates);
+//		  for(int i = 1; i<=T; i++){
+		  while(!nextStates.contains(trellis.getEndState())){
+			  ArrayList<S> newStates = new ArrayList<S>();
+			  for(S nextState: nextStates){
+				  for(S newState: trellis.getForwardTransitions(nextState).keySet()){
+					  if(!newStates.contains(newState)) newStates.add(newState);
+				  }
 			  }
+			  allStates.add(newStates);
+			  nextStates = newStates;
 		  }
-		  pi[0][start] = 0.0;
-
+		  int T = allStates.size();
 		  
-		  for(int i = 1; i<T; i++){
-			  for(int j = 0; j<N; j++){
-				  int b = bp[i][j];
-				  double maxScore = Double.NEGATIVE_INFINITY;
-				  
-				  for(int k = 0; k<N; k++){
-					  double p = pi[i-1][k];
-					  S currentState = (S)State.buildState(states.get(k), states.get(j), i);
-					  S previousState = (S)State.buildState(states.get(bp[i-1][k]), states.get(k), i-1);
+		  // Initialize Values
+		  ArrayList<int[]> bp = new ArrayList<int[]>();
+		  ArrayList<double[]> pi = new ArrayList<double[]>();
+		  for(int i = 0; i < T; i++){
+			  int size = allStates.get(i).size();
+			  int b[] = new int[size];
+			  double p[] = new double[size];
+			  for(int j = 0; j < size; j++){
+				  b[j] = 0;
+				  p[j] = Double.NEGATIVE_INFINITY;
+			  }
+			  bp.add(i, b);
+			  pi.add(i, p);
+		  }
+		  pi.get(0)[0] = 0.0;
+		  
+		  // Viterbi
+		  for(int i = 1; i < T; i++){
+			  int xsize = allStates.get(i).size();
+			  int ysize = allStates.get(i-1).size();
+			  for(int j=0; j<xsize; j++){
+				  int b = 0;
+				  S s1 = allStates.get(i).get(j);
 
-					  double transition = Double.NEGATIVE_INFINITY;					  
-					  if(trellis.getForwardTransitions(previousState).containsKey(currentState)){
-						  transition = trellis.getForwardTransitions(previousState).getCount(currentState);
-					  }
-					  
-					  double score = p + transition;
-					  if(score > maxScore){
-						  maxScore = score;
-						  b = k;
+				  double maxScore = Double.NEGATIVE_INFINITY;
+				  for(int k=0; k<ysize; k++){
+					  double p = pi.get(i-1)[k];
+					  double score = Double.NEGATIVE_INFINITY;
+					  S s2 = allStates.get(i-1).get(k);
+					  if(trellis.getForwardTransitions(s2).containsKey(s1)){
+						  score = trellis.getForwardTransitions(s2).getCount(s1) + p; 
+						  if(score > maxScore){
+							  maxScore = score;
+							  b = k;
+						  }
 					  }
 				  }
-				  pi[i][j] = maxScore;
-				  bp[i][j] = b;
+				  pi.get(i)[j] = maxScore;
+				  bp.get(i)[j] = b;
 			  }
 		  }
 		  
-		  // Find Max Back Pointer
+		  // Find max back pointer
 		  int currentBP = 0;
-		  double m = Double.NEGATIVE_INFINITY;
-		  for(int j = 0; j<N; j++){
-			  double p = pi[T-1][j];
-			  if(p > m){
-				  m = p;
-				  currentBP = j;
+		  double maxPi = Double.NEGATIVE_INFINITY;
+		  for(int i = 0; i < pi.get(T-1).length; i++){
+			  double p = pi.get(T-1)[i];
+			  if(p > maxPi){
+				  maxPi = p;
+				  currentBP = i;
 			  }
 		  }
 		  
 		  // Determine Max Path
 		  List<S> path = new ArrayList<S>();
-		  S statePtr = trellis.getEndState();
-		  path.add(0, statePtr);
 		  for(int i = 1; i<=T; i++){
-//			  if(T == 4){
-//				  System.out.printf("%10.2f %d\t", pi[T-i][currentBP], currentBP);
-//			  }
-
-			  S st = (S)State.buildState(states.get(bp[T-i][currentBP]), states.get(currentBP), T-i);
-			  currentBP = bp[T-i][currentBP];
-			  path.add(0, st);
+			  path.add(0, allStates.get(T-i).get(currentBP));
+			  currentBP = bp.get(T-i)[currentBP];
 		  }
+		  
+//		  ArrayList<String> states = new ArrayList<String>();
+//		  states.addAll(trellis.getPossibleStates().keySet());
+//		  int start = 0;
+//		  if(!states.contains(START_TAG)){
+//			  states.add(start, START_TAG);
+//		  }
+//		  int stop = states.indexOf(STOP_TAG);
+//		  
+//		  int N = states.size();
+//		  int T = trellis.getSentenceLength() + 2;
+//		  double pi[][] = new double[T][N];
+//		  int[][] bp = new int[T][N];
+//		  
+//		  // Initialize Values
+//		  for(int i = 0; i<T; i++){
+//			  for(int j = 0; j<N; j++){
+//				  bp[i][j] = start;
+//				  pi[i][j] = Double.NEGATIVE_INFINITY;
+//			  }
+//		  }
+//		  pi[0][start] = 0.0;
+//		  
+//		  for(int i = 1; i<T; i++){
+//			  for(int j = 0; j<N; j++){
+//				  int b = bp[i][j];
+//				  double maxScore = Double.NEGATIVE_INFINITY;
+//				  
+//				  for(int k = 0; k<N; k++){
+//					  double p = pi[i-1][k];
+//					  S currentState = (S)State.buildState(states.get(k), states.get(j), i);
+//					  S previousState = (S)State.buildState(states.get(bp[i-1][k]), states.get(k), i-1);
+//
+//					  double transition = Double.NEGATIVE_INFINITY;					  
+//					  if(trellis.getForwardTransitions(previousState).containsKey(currentState)){
+//						  transition = trellis.getForwardTransitions(previousState).getCount(currentState);
+//					  }
+//					  
+//					  double score = p + transition;
+//					  if(score > maxScore){
+//						  maxScore = score;
+//						  b = k;
+//					  }
+//				  }
+//				  pi[i][j] = maxScore;
+//				  bp[i][j] = b;
+//			  }
+//		  }
+//		  
+//		  // Find Max Back Pointer
+//		  int currentBP = 0;
+//		  double m = Double.NEGATIVE_INFINITY;
+//		  for(int j = 0; j<N; j++){
+//			  double p = pi[T-1][j];
+//			  if(p > m){
+//				  m = p;
+//				  currentBP = j;
+//			  }
+//		  }
+//		  
+//		  // Determine Max Path
+//		  List<S> path = new ArrayList<S>();
+//		  S statePtr = trellis.getEndState();
+//		  path.add(0, statePtr);
+//		  for(int i = 1; i<=T; i++){
+////			  if(T == 4){
+////				  System.out.printf("%10.2f %d\t", pi[T-i][currentBP], currentBP);
+////			  }
+//
+//			  S st = (S)State.buildState(states.get(bp[T-i][currentBP]), states.get(currentBP), T-i);
+//			  currentBP = bp[T-i][currentBP];
+//			  path.add(0, st);
+//		  }
 		  
 		// Debugging
 		  
@@ -639,9 +718,7 @@ public class POSTaggerTester {
 			  double p_w_given_t = Math.min(tagCounter.getCount(tag)*p_of_w/p_of_t, 1.0);
 			  double p_t1_given_t2t3 = (weights[0]*p_of_t);
 			  if (uCount > 0) p_t1_given_t2t3 += (weights[1]*bigramsCount.getCount(makeBigramString(localTrigramContext.getPreviousTag(), tag))/uCount);
-			  
-			  // TODO: Tracked suboptimalities down to this line:
-//			  if (bCount > 0) p_t1_given_t2t3 += (weights[2]*trigramsCount.getCount(makeTrigramString(localTrigramContext.getPreviousPreviousTag(),localTrigramContext.getPreviousTag(), tag))/bCount);
+			  if (bCount > 0) p_t1_given_t2t3 += (weights[2]*trigramsCount.getCount(makeTrigramString(localTrigramContext.getPreviousPreviousTag(),localTrigramContext.getPreviousTag(), tag))/bCount);
 			  
 			  double logScore = Math.log(p_t1_given_t2t3) + Math.log(p_w_given_t);
 			  
@@ -911,7 +988,7 @@ public class POSTaggerTester {
       double scoreOfGuessedTagging = posTagger.scoreTagging(new TaggedSentence(words, guessedTags));
       if (scoreOfGoldTagging > scoreOfGuessedTagging) {
         numDecodingInversions++;
-//        System.out.println(alignedTaggings(words, goldTags, guessedTags, true) + "\n");
+        System.out.println(alignedTaggings(words, goldTags, guessedTags, true) + "\n");
         if (verbose) System.out.println("WARNING: Decoder suboptimality detected.  Gold tagging has higher score than guessed tagging.");
       }
       if (verbose) System.out.println(alignedTaggings(words, goldTags, guessedTags, true));
