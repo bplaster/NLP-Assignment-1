@@ -563,7 +563,6 @@ public class POSTaggerTester {
 	  
 	  // Tunable parameters
 	  int suffixMaxLength = 10;
-	  double smoothCount = 0.1;
 	  
 	  public int getHistorySize() {
 		  return 2;
@@ -689,22 +688,22 @@ public class POSTaggerTester {
 			  bigramsCount.incrementCount(makeBigramString(labeledLocalTrigramContext.getPreviousTag(), tag), 1.0);
 			  trigramsCount.incrementCount(makeTrigramString(labeledLocalTrigramContext.getPreviousPreviousTag(), labeledLocalTrigramContext.getPreviousTag(), tag), 1.0);
 		  }
-		  
-		  
-		  // Smoothing
-		  for (String tag1: unigramsCount.keySet()){
-			  unigramsCount.incrementCount(tag1, smoothCount);
-			  for (String tag2: unigramsCount.keySet()){
-				  // Smoothing for bigrams
-				  String bigram = makeBigramString(tag1, tag2);
-				  bigramsCount.incrementCount(bigram, smoothCount);
-				  for (String tag3: unigramsCount.keySet()){
-					  // Smoothing for trigrams
-					  String trigram = makeTrigramString(tag1, tag2, tag3);
-					  trigramsCount.incrementCount(trigram, smoothCount);
-				  }
-			  }
-		  }
+		    
+//		  // Smoothing
+//		  int smoothCount = 1;
+//		  for (String tag1: unigramsCount.keySet()){
+//			  unigramsCount.incrementCount(tag1, smoothCount);
+//			  for (String tag2: unigramsCount.keySet()){
+//				  // Smoothing for bigrams
+//				  String bigram = makeBigramString(tag1, tag2);
+//				  bigramsCount.incrementCount(bigram, smoothCount);
+//				  for (String tag3: unigramsCount.keySet()){
+//					  // Smoothing for trigrams
+//					  String trigram = makeTrigramString(tag1, tag2, tag3);
+//					  trigramsCount.incrementCount(trigram, smoothCount);
+//				  }
+//			  }
+//		  }
 		  		  
 		  // Determine weights for Interpolation
 		  // http://www.coli.uni-saarland.de/~thorsten/publications/Brants-ANLP00.pdf
@@ -863,7 +862,6 @@ public class POSTaggerTester {
       double scoreOfGuessedTagging = posTagger.scoreTagging(new TaggedSentence(words, guessedTags));
       if (scoreOfGoldTagging > scoreOfGuessedTagging) {
         numDecodingInversions++;
-        System.out.println(alignedTaggings(words, goldTags, guessedTags, true) + "\n");
         if (verbose) System.out.println("WARNING: Decoder suboptimality detected.  Gold tagging has higher score than guessed tagging.");
       }
       if (verbose) System.out.println(alignedTaggings(words, goldTags, guessedTags, true));
