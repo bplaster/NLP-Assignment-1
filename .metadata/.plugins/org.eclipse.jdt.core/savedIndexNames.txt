@@ -11,8 +11,8 @@ INDEX VERSION 1.127+/Users/brandonplaster/Development/Projects/NLP-Assignment-1/
 2754424148.index
 3914475439.index
 1384487945.index
-3321539481.index
 3266567714.index
+3321539481.index
 3676725848.index
 1572325224.index
 3712507179.index

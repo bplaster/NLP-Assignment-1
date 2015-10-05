@@ -3,7 +3,7 @@
   <persistedState key="memento" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?>&#xA;&lt;workbench>&#xA;&lt;mruList>&#xA;&lt;file factoryID=&quot;org.eclipse.ui.part.FileEditorInputFactory&quot; id=&quot;org.eclipse.jdt.ui.CompilationUnitEditor&quot; name=&quot;POSTaggerTester.java&quot; tooltip=&quot;NLP Test/src/edu/berkeley/nlp/assignments/POSTaggerTester.java&quot;>&#xA;&lt;persistable path=&quot;/NLP Test/src/edu/berkeley/nlp/assignments/POSTaggerTester.java&quot;/>&#xA;&lt;/file>&#xA;&lt;file factoryID=&quot;org.eclipse.jdt.ui.ClassFileEditorInputFactory&quot; id=&quot;org.eclipse.jdt.ui.ClassFileEditor&quot; name=&quot;Arrays.class&quot; tooltip=&quot;java.util.Arrays&quot;>&#xA;&lt;persistable org.eclipse.jdt.ui.ClassFileIdentifier=&quot;=NLP Test/\/Library\/Java\/JavaVirtualMachines\/jdk1.7.0_71.jdk\/Contents\/Home\/jre\/lib\/rt.jar&amp;lt;java.util(Arrays.class&quot;/>&#xA;&lt;/file>&#xA;&lt;file factoryID=&quot;org.eclipse.ui.part.FileEditorInputFactory&quot; id=&quot;org.eclipse.jdt.ui.CompilationUnitEditor&quot; name=&quot;PennTreebankReader.java&quot; tooltip=&quot;NLP Test/src/edu/berkeley/nlp/io/PennTreebankReader.java&quot;>&#xA;&lt;persistable path=&quot;/NLP Test/src/edu/berkeley/nlp/io/PennTreebankReader.java&quot;/>&#xA;&lt;/file>&#xA;&lt;file factoryID=&quot;org.eclipse.ui.part.FileEditorInputFactory&quot; id=&quot;org.eclipse.jdt.ui.CompilationUnitEditor&quot; name=&quot;BoundedList.java&quot; tooltip=&quot;NLP Test/src/edu/berkeley/nlp/util/BoundedList.java&quot;>&#xA;&lt;persistable path=&quot;/NLP Test/src/edu/berkeley/nlp/util/BoundedList.java&quot;/>&#xA;&lt;/file>&#xA;&lt;file factoryID=&quot;org.eclipse.ui.part.FileEditorInputFactory&quot; id=&quot;org.eclipse.jdt.ui.CompilationUnitEditor&quot; name=&quot;Trees.java&quot; tooltip=&quot;NLP Test/src/edu/berkeley/nlp/ling/Trees.java&quot;>&#xA;&lt;persistable path=&quot;/NLP Test/src/edu/berkeley/nlp/ling/Trees.java&quot;/>&#xA;&lt;/file>&#xA;&lt;file factoryID=&quot;org.eclipse.jdt.ui.ClassFileEditorInputFactory&quot; id=&quot;org.eclipse.jdt.ui.ClassFileEditor&quot; name=&quot;PrintStream.class&quot; tooltip=&quot;java.io.PrintStream&quot;>&#xA;&lt;persistable org.eclipse.jdt.ui.ClassFileIdentifier=&quot;=NLP Test/\/Library\/Java\/JavaVirtualMachines\/jdk1.7.0_71.jdk\/Contents\/Home\/jre\/lib\/rt.jar&amp;lt;java.io(PrintStream.class&quot;/>&#xA;&lt;/file>&#xA;&lt;/mruList>&#xA;&lt;/workbench>"/>
   <tags>activeSchemeId:org.eclipse.ui.defaultAcceleratorConfiguration</tags>
   <tags>ModelMigrationProcessor.001</tags>
-  <children xsi:type="basic:TrimmedWindow" xmi:id="_C53IMGemEeWnWL5XCNrNpw" elementId="IDEWindow" contributorURI="platform:/plugin/org.eclipse.platform" selectedElement="_DSoNgmemEeWnWL5XCNrNpw" label="%trimmedwindow.label.eclipseSDK" x="46" y="23" width="1191" height="768">
+  <children xsi:type="basic:TrimmedWindow" xmi:id="_C53IMGemEeWnWL5XCNrNpw" elementId="IDEWindow" contributorURI="platform:/plugin/org.eclipse.platform" selectedElement="_DSoNgmemEeWnWL5XCNrNpw" label="%trimmedwindow.label.eclipseSDK" x="30" y="23" width="1191" height="768">
     <persistedState key="coolBarVisible" value="true"/>
     <persistedState key="perspectiveBarVisible" value="true"/>
     <persistedState key="isRestored" value="true"/>
@@ -11,7 +11,6 @@
     <persistedState key="workingSets" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?>&#xA;&lt;workingSets/>"/>
     <persistedState key="aggregateWorkingSetId" value="Aggregate for window 1443639861561"/>
     <tags>topLevel</tags>
-    <tags>shellMaximized</tags>
     <children xsi:type="basic:PartSashContainer" xmi:id="_DSoNgmemEeWnWL5XCNrNpw" selectedElement="_DSo0kGemEeWnWL5XCNrNpw" horizontal="true">
       <children xsi:type="advanced:PerspectiveStack" xmi:id="_DSo0kGemEeWnWL5XCNrNpw" elementId="org.eclipse.ui.ide.perspectivestack" containerData="7500" selectedElement="_DoOqEGemEeWnWL5XCNrNpw">
         <children xsi:type="advanced:Perspective" xmi:id="_DoOqEGemEeWnWL5XCNrNpw" elementId="org.eclipse.jdt.ui.JavaPerspective" selectedElement="_DoOqEWemEeWnWL5XCNrNpw" label="Java" iconURI="platform:/plugin/org.eclipse.jdt.ui/$nl$/icons/full/eview16/jperspective.png">
@@ -222,7 +221,7 @@
         <tags>EditorStack</tags>
         <tags>active</tags>
         <children xsi:type="basic:Part" xmi:id="_cxPV4GemEeWnWL5XCNrNpw" elementId="org.eclipse.e4.ui.compatibility.editor" contributionURI="bundleclass://org.eclipse.ui.workbench/org.eclipse.ui.internal.e4.compatibility.CompatibilityEditor" label="POSTaggerTester.java" iconURI="platform:/plugin/org.eclipse.jdt.ui/icons/full/obj16/jcu_obj.png" closeable="true">
-          <persistedState key="memento" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?>&#xA;&lt;editor id=&quot;org.eclipse.jdt.ui.CompilationUnitEditor&quot; name=&quot;POSTaggerTester.java&quot; partName=&quot;POSTaggerTester.java&quot; title=&quot;POSTaggerTester.java&quot; tooltip=&quot;NLP Test/src/edu/berkeley/nlp/assignments/POSTaggerTester.java&quot;>&#xA;&lt;input factoryID=&quot;org.eclipse.ui.part.FileEditorInputFactory&quot; path=&quot;/NLP Test/src/edu/berkeley/nlp/assignments/POSTaggerTester.java&quot;/>&#xA;&lt;editorState selectionHorizontalPixel=&quot;0&quot; selectionLength=&quot;7&quot; selectionOffset=&quot;9238&quot; selectionTopPixel=&quot;0&quot;/>&#xA;&lt;/editor>"/>
+          <persistedState key="memento" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?>&#xA;&lt;editor id=&quot;org.eclipse.jdt.ui.CompilationUnitEditor&quot; name=&quot;POSTaggerTester.java&quot; partName=&quot;POSTaggerTester.java&quot; title=&quot;POSTaggerTester.java&quot; tooltip=&quot;NLP Test/src/edu/berkeley/nlp/assignments/POSTaggerTester.java&quot;>&#xA;&lt;input factoryID=&quot;org.eclipse.ui.part.FileEditorInputFactory&quot; path=&quot;/NLP Test/src/edu/berkeley/nlp/assignments/POSTaggerTester.java&quot;/>&#xA;&lt;editorState selectionHorizontalPixel=&quot;0&quot; selectionLength=&quot;0&quot; selectionOffset=&quot;20882&quot; selectionTopPixel=&quot;8903&quot;/>&#xA;&lt;/editor>"/>
           <tags>Editor</tags>
           <tags>org.eclipse.jdt.ui.CompilationUnitEditor</tags>
           <tags>removeOnHide</tags>
@@ -416,7 +415,7 @@
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_DUWEwGemEeWnWL5XCNrNpw" elementId="org.eclipse.ui.workbench.file">
         <tags>Draggable</tags>
-        <children xsi:type="menu:HandledToolItem" xmi:id="_maS6sGufEeWpR5BH9gbCrw" elementId="print" visible="false" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/print_edit.png" tooltip="Print" command="_C6uq42emEeWnWL5XCNrNpw"/>
+        <children xsi:type="menu:HandledToolItem" xmi:id="_3mHJoGujEeWJbPX-Lh9fXw" elementId="print" visible="false" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/print_edit.png" tooltip="Print" command="_C6uq42emEeWnWL5XCNrNpw"/>
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_DUWr0GemEeWnWL5XCNrNpw" elementId="additions" toBeRendered="false">
         <tags>toolbarSeparator</tags>
@@ -440,7 +439,7 @@
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_DUXS4GemEeWnWL5XCNrNpw" elementId="org.eclipse.ui.workbench.navigate">
         <tags>Draggable</tags>
-        <children xsi:type="menu:HandledToolItem" xmi:id="_maZoYGufEeWpR5BH9gbCrw" elementId="org.eclipse.ui.window.pinEditor" visible="false" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/pin_editor.png" tooltip="Pin Editor" type="Check" command="_C6kS52emEeWnWL5XCNrNpw"/>
+        <children xsi:type="menu:HandledToolItem" xmi:id="_3mLbEGujEeWJbPX-Lh9fXw" elementId="org.eclipse.ui.window.pinEditor" visible="false" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/pin_editor.png" tooltip="Pin Editor" type="Check" command="_C6kS52emEeWnWL5XCNrNpw"/>
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_DUXS4WemEeWnWL5XCNrNpw" elementId="group.editor" toBeRendered="false">
         <tags>toolbarSeparator</tags>
@@ -758,7 +757,7 @@
     </bindings>
     <bindings xmi:id="_C8F802emEeWnWL5XCNrNpw" keySequence="ALT+CTRL+H" command="_C6mIBWemEeWnWL5XCNrNpw"/>
     <bindings xmi:id="_C8Gj4GemEeWnWL5XCNrNpw" keySequence="ALT+COMMAND+SHIFT+ARROW_DOWN" command="_C6xHK2emEeWnWL5XCNrNpw"/>
-    <bindings xmi:id="_k6iYIGufEeWpR5BH9gbCrw" keySequence="COMMAND+CTRL+F" command="_C8T_QGemEeWnWL5XCNrNpw"/>
+    <bindings xmi:id="_2ewgAWujEeWJbPX-Lh9fXw" keySequence="COMMAND+CTRL+F" command="_C8T_QGemEeWnWL5XCNrNpw"/>
   </bindingTables>
   <bindingTables xmi:id="_C7aAUWemEeWnWL5XCNrNpw" elementId="org.eclipse.ui.textEditorScope" bindingContext="_C63012emEeWnWL5XCNrNpw">
     <bindings xmi:id="_C7aAUmemEeWnWL5XCNrNpw" keySequence="COMMAND+SHIFT+NUMPAD_MULTIPLY" command="_C6k56GemEeWnWL5XCNrNpw"/>
@@ -1034,7 +1033,7 @@
     <bindings xmi:id="_C8F80memEeWnWL5XCNrNpw" keySequence="CTRL+D" command="_C6pybWemEeWnWL5XCNrNpw"/>
   </bindingTables>
   <bindingTables xmi:id="_C8UmU2emEeWnWL5XCNrNpw" contributorURI="platform:/fragment/org.eclipse.e4.ui.workbench.renderers.swt.cocoa" bindingContext="_C53INWemEeWnWL5XCNrNpw">
-    <bindings xmi:id="_k6iYIWufEeWpR5BH9gbCrw" keySequence="M1+W" command="_C8UmUWemEeWnWL5XCNrNpw"/>
+    <bindings xmi:id="_2exHEGujEeWJbPX-Lh9fXw" keySequence="M1+W" command="_C8UmUWemEeWnWL5XCNrNpw"/>
   </bindingTables>
   <bindingTables xmi:id="_Dnvh4WemEeWnWL5XCNrNpw" bindingContext="_Dnvh4GemEeWnWL5XCNrNpw"/>
   <bindingTables xmi:id="_DnwI8WemEeWnWL5XCNrNpw" bindingContext="_DnwI8GemEeWnWL5XCNrNpw"/>

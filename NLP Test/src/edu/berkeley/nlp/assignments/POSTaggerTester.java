@@ -605,6 +605,18 @@ public class POSTaggerTester {
 				  logScoreCounter.setCount(tag, logScore);
 		  }
 		  
+		  // Specific to Twitter Data Set (Though no impact on penn testing)
+		  switch(word.charAt(0)){
+		  case '#':
+			  logScoreCounter = new Counter<String>();
+			  logScoreCounter.setCount("HT", 0.0);
+			  break;
+		  case '@':
+			  logScoreCounter = new Counter<String>();
+			  logScoreCounter.setCount("USR", 0.0);
+			  break;
+		  }
+		  
 		  return logScoreCounter;
 	  }
 	  
