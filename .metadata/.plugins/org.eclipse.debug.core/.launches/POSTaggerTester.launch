@@ -8,6 +8,6 @@
 </listAttribute>
 <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="edu.berkeley.nlp.assignments.POSTaggerTester"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-path /Users/brandonplaster/Development/Projects/NLP-Assignment-1/wsj&#10;-hmm&#10;-viterbi"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-path /Users/brandonplaster/Development/Projects/NLP-Assignment-1/wsj/&#10;-decoder viterbi&#10;-tagger hmm&#10;-traincorpus penn&#10;-testcorpus penn&#10;-test test"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="NLP Test"/>
 </launchConfiguration>

@@ -6,6 +6,7 @@ import edu.berkeley.nlp.ling.Trees;
 import edu.berkeley.nlp.util.*;
 
 import java.util.*;
+import java.io.*;
 
 /**
  * @author Dan Klein
@@ -552,8 +553,7 @@ public class POSTaggerTester {
 	    
 	  int suffixMaxLength = 10;
 
-	  double lowSufWeights[] = new double[suffixMaxLength];
-	  double capSufWeights[] = new double[suffixMaxLength];
+//	  double suffixWeights[] = new double[suffixMaxLength];
 	  double interpWeights[] = {0.0,0.0,0.0};
 	  CounterMap<String, String> wordsToTags = new CounterMap<String, String>();
 	  CounterMap<String, String> lowSuffixesToTags = new CounterMap<String, String>();
@@ -614,10 +614,8 @@ public class POSTaggerTester {
 		  Counter<String> averageSuffixTags = new Counter<String>();
 		  
 		  CounterMap<String, String> suffixesToTags = this.lowSuffixesToTags;
-		  double sufWeights[] = this.lowSufWeights;
 		  if(Character.isUpperCase(word.charAt(0))){
 			  suffixesToTags = this.capSuffixesToTags;
-			  sufWeights = this.capSufWeights;
 		  }
 		  
 		  // Average the tags over all the possible suffixes
@@ -635,7 +633,7 @@ public class POSTaggerTester {
 //				  if(suffixesToTags.getCount(suffix, tag) > 0){
 //					 maxLikelihood = suffixesToTags.getCount(suffix, tag) / suffixesToTags.getCounter(suffix).totalCount();
 //				  }
-//				  p_t_given_i = (maxLikelihood + p_t_given_i*sufWeights[i])/(1.0 + sufWeights[i]);
+//				  p_t_given_i = (maxLikelihood + p_t_given_i*suffixWeights[i])/(1.0 + suffixWeights[i]);
 //			  }
 //			  averageSuffixTags.incrementCount(tag, p_t_given_i);
 //		  }
@@ -667,7 +665,7 @@ public class POSTaggerTester {
 	  }
 	  
 	  private void incrementSuffixes(String word, String tag, double count){
-		  int max = Math.min(suffixMaxLength, word.length());
+		  int max = Math.min(suffixMaxLength, word.length()-2);
 		  int lastIndex = word.length() - 1;
 		  
 		  CounterMap<String, String> suffixesToTags = this.lowSuffixesToTags;
@@ -742,36 +740,6 @@ public class POSTaggerTester {
 		  double len = interpWeights[0] + interpWeights[1] + interpWeights[2];
 		  for(int i=0; i<interpWeights.length; i++){ interpWeights[i] /= len; }
 		  System.out.printf("Interpolation weights: %.3f %.3f %.3f \n", interpWeights[0], interpWeights[1], interpWeights[2]);
-		  
-//		  // Determine weights for Suffixes
-//		  for(String suffix: lowSuffixesToTags.keySet()){
-//			  lowSufWeights[suffix.length()] += lowSuffixesToTags.getCounter(suffix).totalCount();
-//		  }
-//		  for(String suffix: capSuffixesToTags.keySet()){
-//			  capSufWeights[suffix.length()] += capSuffixesToTags.getCounter(suffix).totalCount();
-//		  }
-//		  double lowWeightsSum = 0.0;
-//		  double capWeightsSum = 0.0;
-//		  for(int i = 0; i<lowSufWeights.length; i++){
-//			  lowWeightsSum += lowSufWeights[i];
-//			  capWeightsSum += capSufWeights[i];
-//		  }
-//		  for(int i = 0; i<lowSufWeights.length; i++){
-//			  lowSufWeights[i] /= lowWeightsSum;
-//			  capSufWeights[i] /= capWeightsSum;
-//		  }
-//		  
-//		  // Display Suffix Weights
-//		  System.out.print("Lower Case Suffix weights: ");
-//		  for(int i=0; i<lowSufWeights.length; i++){
-//			  System.out.printf("%.3f ", lowSufWeights[i]);
-//		  }
-//		  System.out.println();
-//		  System.out.print("Upper Case Suffix weights: ");
-//		  for(int i=0; i<capSufWeights.length; i++){
-//			  System.out.printf("%.3f ", capSufWeights[i]);
-//		  }
-//		  System.out.println();
 		  
 		  // Normalize
 		  wordCount = Counters.normalize(wordCount);
@@ -881,17 +849,75 @@ public class POSTaggerTester {
     }
   }
 
-  private static List<TaggedSentence> readTaggedSentences(String path, int low, int high) {
-    Collection<Tree<String>> trees = PennTreebankReader.readTrees(path, low, high);
-    List<TaggedSentence> taggedSentences = new ArrayList<TaggedSentence>();
-    Trees.TreeTransformer<String> treeTransformer = new Trees.EmptyNodeStripper();
-    for (Tree<String> tree : trees) {
-      tree = treeTransformer.transformTree(tree);
-      List<String> words = new BoundedList<String>(new ArrayList<String>(tree.getYield()), START_WORD, STOP_WORD);
-      List<String> tags = new BoundedList<String>(new ArrayList<String>(tree.getPreTerminalYield()), START_TAG, STOP_TAG);
-      taggedSentences.add(new TaggedSentence(words, tags));
-    }
-    return taggedSentences;
+  private static List<TaggedSentence> readTaggedSentences(String corpus, String path, int low, int high) {
+	  List<TaggedSentence> taggedSentences = new ArrayList<TaggedSentence>();
+
+	  switch(corpus){
+	  	case "penn": {
+	  		System.out.print("Penn Treeback Corpus...");
+	  		Collection<Tree<String>> trees = PennTreebankReader.readTrees(path, low, high);
+	  		Trees.TreeTransformer<String> treeTransformer = new Trees.EmptyNodeStripper();
+	  		for (Tree<String> tree : trees) {
+	  			tree = treeTransformer.transformTree(tree);
+	  			List <String> words = new BoundedList<String>(new ArrayList<String>(tree.getYield()), START_WORD, STOP_WORD);
+	  			List <String> tags = new BoundedList<String>(new ArrayList<String>(tree.getPreTerminalYield()), START_TAG, STOP_TAG);
+	  			taggedSentences.add(new TaggedSentence(words, tags));
+	  		}
+	  		break;
+	  	}
+	  	case "twitter": {
+	  		System.out.print("Twitter Corpus...");
+	  		try {
+				taggedSentences = readTwitterFile(path + "pos.txt", low, high);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+	  		break;
+	  	}
+	  	default: {
+	  		System.out.print("Invalid corpus selection...");
+	  		break;
+	  	}
+	  }
+		
+	  return taggedSentences;
+  }
+  
+  private static List<TaggedSentence> readTwitterFile(String path, int low, int high) throws IOException {
+	  List<TaggedSentence> taggedSentences = new ArrayList<TaggedSentence>();
+
+	  BufferedReader br = new BufferedReader(new FileReader(path));
+
+	  String line = null;
+	  List <String> wordArray = new ArrayList<String>();
+	  List <String> tagArray = new ArrayList<String>();
+	  
+	  int index = 0;
+	  while ((line = br.readLine()) != null && index < high) {
+		  if(index >= low){
+			  if(line.isEmpty()){
+				  index++;
+				  List <String> words = new BoundedList<String>(new ArrayList<String>(wordArray), START_WORD, STOP_WORD);
+				  List <String> tags = new BoundedList<String>(new ArrayList<String>(tagArray), START_TAG, STOP_TAG);
+				  taggedSentences.add(new TaggedSentence(words, tags));
+				  wordArray.clear();
+				  tagArray.clear();
+
+			  } else {
+				  String wt[] = line.split(" ");
+				  wordArray.add(wt[0]);
+				  tagArray.add(wt[1]);
+
+			  }
+		  } else if(line.isEmpty()){
+			  index++;
+		  }
+	  }
+
+	  br.close();
+	  return taggedSentences;
   }
 
   private static void evaluateTagger(POSTagger posTagger, List<TaggedSentence> taggedSentences, Set<String> trainingVocabulary, boolean verbose) {
@@ -982,6 +1008,12 @@ public class POSTaggerTester {
     String basePath = ".";
     boolean verbose = false;
     boolean useValidation = true;
+    boolean trainOnBoth = false;
+    String trainCorpus = "penn";
+    String testCorpus = "penn";
+    int[] trainLines = {200, 2199, 0, 0};
+    int[] validationLines = {2200, 2299};
+    int[] testLines = {2300, 2399};
 
     // Update defaults using command line specifications
 
@@ -993,11 +1025,64 @@ public class POSTaggerTester {
 
     // Whether to use the validation or test set
     if (argMap.containsKey("-test")) {
-      String testString = argMap.get("-test");
-      if (testString.equalsIgnoreCase("test"))
-        useValidation = false;
+    	String testString = argMap.get("-test").toLowerCase();
+    	switch (testString){
+			case "test": {
+				useValidation = false;
+				break;
+			}
+			default: {
+				useValidation = true;
+				break;
+			}
+    	}
     }
     System.out.println("Testing on: " + (useValidation ? "validation" : "test"));
+    
+    // Whether to use different training corpus
+    if (argMap.containsKey("-traincorpus")){
+        trainCorpus = argMap.get("-traincorpus").toLowerCase(); 
+        switch(trainCorpus){
+		  	case "twitter": {
+		  		trainLines[0] = 0;
+		  		trainLines[1] = 400;
+		  		validationLines[0] = 401;
+		  		validationLines[1] = 787;
+		  		break;
+		  	}
+		  	case "both": {
+		  		trainLines[2] = 0;
+		  		trainLines[3] = 400;
+		  		trainOnBoth = true;
+		  		trainCorpus = "penn";
+		  		break;
+		  	}
+		  	default: {
+		  		trainLines[0] = 200;
+		  		trainLines[1] = 2199;
+		  		validationLines[0] = 2200;
+		  		validationLines[1] = 2299;
+		  		break;
+		  	}
+        }
+    }
+    
+    // Whether to use different testing corpus
+    if (argMap.containsKey("-testcorpus")){
+    	testCorpus = argMap.get("-testcorpus").toLowerCase();  
+    	switch(testCorpus){
+	    	case "twitter": {
+	    		testLines[0] = 401;
+	    		testLines[1] = 787;
+	    		break;
+	    	}
+	    	default: {
+	    		testLines[0] = 2300;
+	    		testLines[1] = 2399;
+	    		break;
+	    	}
+    	}
+    }
 
     // Whether or not to print the individual errors.
     if (argMap.containsKey("-verbose")) {
@@ -1006,28 +1091,54 @@ public class POSTaggerTester {
 
     // Read in data
     System.out.print("Loading training sentences...");
-    List<TaggedSentence> trainTaggedSentences = readTaggedSentences(basePath, 200, 2199);
+    List<TaggedSentence> trainTaggedSentences;
+    if(trainOnBoth){
+    	trainTaggedSentences = readTaggedSentences("penn", basePath, trainLines[0], trainLines[1]);
+    	trainTaggedSentences.addAll(readTaggedSentences("twitter", basePath, trainLines[2], trainLines[3]));
+    } else {
+    	trainTaggedSentences = readTaggedSentences(trainCorpus, basePath, trainLines[0], trainLines[1]);
+    }
     Set<String> trainingVocabulary = extractVocabulary(trainTaggedSentences);
     System.out.println("done.");
     System.out.print("Loading validation sentences...");
-    List<TaggedSentence> validationTaggedSentences = readTaggedSentences(basePath, 2200, 2299);
+    List<TaggedSentence> validationTaggedSentences = readTaggedSentences(trainCorpus, basePath, validationLines[0], validationLines[1]);
     System.out.println("done.");
     System.out.print("Loading test sentences...");
-    List<TaggedSentence> testTaggedSentences = readTaggedSentences(basePath, 2300, 2399);
+    List<TaggedSentence> testTaggedSentences = readTaggedSentences(testCorpus, basePath, testLines[0], testLines[1]);
     System.out.println("done.");
 
     // Construct tagger components
     LocalTrigramScorer localTrigramScorer;
     TrellisDecoder<State> trellisDecoder;
     
-    if (argMap.containsKey("-hmm")){
-    	localTrigramScorer = new HMMTagScorer(false);
-    } else {
+    if (argMap.containsKey("-tagger")){
+    	String tagger = argMap.get("-tagger").toLowerCase();
+    	switch(tagger){
+	    	case "hmm": {
+	        	localTrigramScorer = new HMMTagScorer(false);
+	        	break;
+	    	}
+	    	default: {
+	        	localTrigramScorer = new MostFrequentTagScorer(false);
+	        	break;
+	    	}
+    	}
+	} else {
     	localTrigramScorer = new MostFrequentTagScorer(false);
-    }
-    
-    if (argMap.containsKey("-viterbi")){
-    	trellisDecoder = new ViterbiDecoder<State>();
+	}
+    	
+    if (argMap.containsKey("-decoder")){
+    	String decoder = argMap.get("-decoder").toLowerCase();
+    	switch(decoder){
+	    	case "viterbi": {
+	        	trellisDecoder = new ViterbiDecoder<State>();
+	    		break;
+	    	}
+	    	default:{
+	        	trellisDecoder = new GreedyDecoder<State>();
+	    		break;
+	    	}
+    	}
     } else {
     	trellisDecoder = new GreedyDecoder<State>();
     }
